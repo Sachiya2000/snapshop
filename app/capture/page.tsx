@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 const MAX_SIDE = 2000;
 
@@ -29,17 +29,12 @@ export default function CapturePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = e.target.files?.[0];
     e.target.value = "";
     if (picked) {
+      if (preview) URL.revokeObjectURL(preview);
+      setPreview(URL.createObjectURL(picked));
       setError(null);
       setFile(picked);
     }

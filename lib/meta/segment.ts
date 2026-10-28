@@ -70,8 +70,9 @@ async function runSam(jpeg: Buffer, phrase: string): Promise<SegmentationMaskRec
     );
 
     const parsed = parseImageStream(events);
+    // Drain the stream; we only need the final result.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _snapshot of parsed) {
-      // Drain the stream; we only need the final result.
     }
     const result = await parsed.finalResult;
     if (result.outcome.status !== "completed") {
