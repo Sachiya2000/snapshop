@@ -1,17 +1,27 @@
 {
-  "name": "meta-hackthon",
+  "name": "snapshop",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "verify:meta": "tsx --env-file-if-exists=.env.local scripts/verify-meta.ts"
   },
   "dependencies": {
+    "@meta-sam/parser": "0.1.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "next": "16.4.3",
+    "openai": "7.45.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "sharp": "0.35.5",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -20,6 +30,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "prisma": "7.10.1",
+    "tsx": "4.23.15",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

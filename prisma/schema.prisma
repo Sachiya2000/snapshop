@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JobStatus {
+  queued
+  segmenting
+  imaging
+  writing
+  review
+  published
+  failed
+}
+
+model ListingJob {
+  id            String    @id @default(cuid())
+  status        JobStatus @default(queued)
+  // Storage keys (see lib/storage.ts), not URLs.
+  originalImage String
+  cutoutImage   String?
+  studioImages  String[]
+  // Short noun phrase for the product, e.g. "red ceramic mug". Used as the SAM prompt.
+  subjectPhrase String?
+  // Bilingual listing JSON (see lib/meta/listing.ts).
+  listing       Json?
+  error         String?
+  // Attempts at the current step; reset when a step succeeds.
+  attempts      Int       @default(0)
+  // Set while a step runs. Stale values let a later poll take over.
+  stepStartedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+}
