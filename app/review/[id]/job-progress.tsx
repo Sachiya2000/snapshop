@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { JobView } from "@/lib/pipeline/view";
+import { ListingEditor } from "./listing-editor";
 
 const POLL_MS = 2000;
 
@@ -48,6 +49,15 @@ export function JobProgress({ id }: { id: string }) {
 
   if (!job) return <p className="text-zinc-500">{fetchError ?? "Loading…"}</p>;
 
+  if (job.status === "ready" || job.status === "published") {
+    const { listing } = job;
+    if (!listing) {
+      return <p className="text-zinc-500">This listing was made with an older version of SnapShop. Please create it again.</p>;
+    }
+    // key: remount (fresh form state) if a different job is loaded.
+    return <ListingEditor key={job.id} job={{ ...job, listing }} onUpdate={setJob} />;
+  }
+
   const current = ORDER.indexOf(job.status);
 
   return (
@@ -55,8 +65,7 @@ export function JobProgress({ id }: { id: string }) {
       <ol className="flex flex-col gap-2">
         {STEPS.map((step) => {
           const index = ORDER.indexOf(step.status);
-          const state =
-            job.status === "failed" ? "idle" : index < current || job.status === "ready" || job.status === "published" ? "done" : index === current ? "active" : "idle";
+          const state = job.status === "failed" ? "idle" : index < current ? "done" : index === current ? "active" : "idle";
           return (
             <li key={step.status} className="flex items-center gap-3">
               <span
@@ -102,21 +111,6 @@ export function JobProgress({ id }: { id: string }) {
         ))}
         {/* eslint-enable @next/next/no-img-element */}
       </div>
-
-      {job.listing && (
-        <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="text-lg font-semibold">{job.listing.title}</h2>
-          <p className="text-sm text-zinc-500">{job.listing.category}</p>
-          <p className="text-lg font-semibold">
-            {job.listing.priceRange.currency} {job.listing.priceRange.min.toLocaleString()} –{" "}
-            {job.listing.priceRange.max.toLocaleString()}
-          </p>
-          <p className="text-sm">{job.listing.description}</p>
-          {job.listing.missingDetails.length > 0 && (
-            <p className="text-sm text-zinc-500">Consider adding: {job.listing.missingDetails.join(", ")}</p>
-          )}
-        </section>
-      )}
     </div>
   );
 }
