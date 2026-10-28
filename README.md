@@ -8,7 +8,7 @@ A shop owner snaps a product photo. SnapShop then:
 2. **Generates** clean studio-style product photos with **Muse Image**.
 3. **Writes** the title, description, category, and a suggested price range with **Muse Spark** (English for now; Sinhala is planned once its output quality is reliable).
 4. **Checks** the result with an agent loop that retries or fixes weak output *(planned)*.
-5. Lets the owner **review, edit, and publish** to a public storefront *(planned)*.
+5. Lets the owner **review, edit, and publish** to a public storefront.
 
 All AI calls go through the [Meta Model API](https://dev.meta.ai/docs/models) and run only on the server.
 
@@ -22,13 +22,18 @@ All AI calls go through the [Meta Model API](https://dev.meta.ai/docs/models) an
 ## How the pipeline runs
 
 Each upload creates a `ListingJob` row. The work is split into short steps
-(`queued → segmenting → imaging → writing → review`), and each step runs in
+(`queued → identifying → segmenting → imaging → writing → ready`), and each step runs in
 its own function invocation:
 
 - `POST /api/listing` stores the photo, creates the job, and starts the first step with `after()`.
 - `GET /api/listing/:id` returns the status. If the job is idle (or its step lock is stale), it starts the next step with `after()`.
 
-The capture page polls every 2 seconds, so polling is what drives the
+Once the job is `ready`, the owner edits the draft and publishes it. A
+published listing gets a public slug (`/store/<slug>`); the job id, which is
+what allows editing, never appears on the storefront. There are no accounts
+yet, so treat the review link as private.
+
+The review page polls every 2 seconds, so polling is what drives the
 pipeline. No single request has to wait for the whole job, and a crashed step
 is picked up again once its lock expires. A job only moves forward while
 someone is polling it.
@@ -37,9 +42,10 @@ someone is polling it.
 
 ```
 app/capture          mobile photo capture + upload
-app/review/[id]      job status (edit form comes later)
-app/store            public storefront (placeholder)
-app/api/listing      create job, poll status
+app/review/[id]      live job status, then the edit / publish form
+app/store            public storefront grid; app/store/[slug] product page
+app/api/listing      create job, poll status, save edits, publish/unpublish
+app/api/store        published listings (JSON)
 app/api/images       serves locally stored images
 lib/meta             typed Meta Model API wrappers (SAM, Muse Image, Muse Spark)
 lib/pipeline         one file per pipeline step + the runner
