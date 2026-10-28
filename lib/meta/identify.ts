@@ -7,7 +7,7 @@ const subjectSchema = z.object({ phrase: z.string().min(1).max(60) });
 // SAM 3.1 works best with one short, concrete noun phrase ("red ceramic mug"),
 // so we ask Muse Spark to name the product before segmenting.
 // https://dev.meta.ai/docs/sam/segmenting
-export async function describeSubject(imageDataUrl: string): Promise<string> {
+export async function identifyProduct(imageDataUrl: string): Promise<string> {
   const raw = await getTextProvider().generateJson({
     name: "product_subject",
     instructions:
@@ -26,7 +26,7 @@ export async function describeSubject(imageDataUrl: string): Promise<string> {
 
   const parsed = subjectSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new MetaApiError("subject phrase failed validation", "describeSubject", undefined, undefined, true);
+    throw new MetaApiError("subject phrase failed validation", "identifyProduct", undefined, undefined, true);
   }
   return parsed.data.phrase.trim().toLowerCase();
 }

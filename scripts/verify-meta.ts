@@ -12,7 +12,7 @@ import { MetaApiError, getMetaClient, toDataUrl } from "@/lib/meta/client";
 import { generateStudioImages } from "@/lib/meta/images";
 import { generateListing } from "@/lib/meta/listing";
 import { cutoutOnWhite, segmentProduct } from "@/lib/meta/segment";
-import { describeSubject } from "@/lib/meta/subject";
+import { identifyProduct } from "@/lib/meta/identify";
 
 const ALL_STEPS = ["models", "subject", "sam", "images", "listing"] as const;
 type Step = (typeof ALL_STEPS)[number];
@@ -85,7 +85,7 @@ async function main() {
   });
 
   await run("subject", async () => {
-    phrase = await describeSubject(photoUrl);
+    phrase = await identifyProduct(photoUrl);
     return `"${phrase}"`;
   });
 

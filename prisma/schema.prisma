@@ -9,10 +9,14 @@ datasource db {
 
 enum JobStatus {
   queued
+  identifying
   segmenting
   imaging
   writing
-  review
+  // Quality agent (planned): checks the outputs and retries weak steps.
+  reviewing
+  // Waiting for the owner to review, edit and publish.
+  ready
   published
   failed
 }
@@ -24,10 +28,14 @@ model ListingJob {
   originalImage String
   cutoutImage   String?
   studioImages  String[]
+  // The photo the owner picked for the storefront (one of the keys above).
+  coverImage    String?
   // Short noun phrase for the product, e.g. "red ceramic mug". Used as the SAM prompt.
   subjectPhrase String?
   // Listing JSON (see listingSchema in lib/meta/listing.ts).
   listing       Json?
+  // Quality agent findings and decisions (planned).
+  qualityNotes  Json?
   error         String?
   // Attempts at the current step; reset when a step succeeds.
   attempts      Int       @default(0)
@@ -35,6 +43,7 @@ model ListingJob {
   stepStartedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  publishedAt   DateTime?
 
-  @@index([status])
+  @@index([status, publishedAt])
 }

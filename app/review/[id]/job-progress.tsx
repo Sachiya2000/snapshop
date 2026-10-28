@@ -6,13 +6,14 @@ import type { JobView } from "@/lib/pipeline/view";
 const POLL_MS = 2000;
 
 const STEPS = [
-  { status: "segmenting", label: "Finding your product" },
+  { status: "identifying", label: "Identifying your product" },
+  { status: "segmenting", label: "Removing the background" },
   { status: "imaging", label: "Creating studio photos" },
   { status: "writing", label: "Writing title & description" },
-  { status: "review", label: "Ready to review" },
+  { status: "ready", label: "Ready to review" },
 ] as const;
 
-const ORDER = ["queued", "segmenting", "imaging", "writing", "review", "published"];
+const ORDER = ["queued", "identifying", "segmenting", "imaging", "writing", "reviewing", "ready", "published"];
 
 export function JobProgress({ id }: { id: string }) {
   const [job, setJob] = useState<JobView | null>(null);
@@ -30,7 +31,7 @@ export function JobProgress({ id }: { id: string }) {
         if (cancelled) return;
         setJob(next);
         setFetchError(null);
-        if (next.status === "review" || next.status === "published" || next.status === "failed") return;
+        if (next.status === "ready" || next.status === "published" || next.status === "failed") return;
       } catch (err) {
         if (cancelled) return;
         setFetchError(err instanceof Error ? err.message : "Network error");
@@ -55,7 +56,7 @@ export function JobProgress({ id }: { id: string }) {
         {STEPS.map((step) => {
           const index = ORDER.indexOf(step.status);
           const state =
-            job.status === "failed" ? "idle" : index < current || job.status === "review" ? "done" : index === current ? "active" : "idle";
+            job.status === "failed" ? "idle" : index < current || job.status === "ready" || job.status === "published" ? "done" : index === current ? "active" : "idle";
           return (
             <li key={step.status} className="flex items-center gap-3">
               <span

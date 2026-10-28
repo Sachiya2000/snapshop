@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import type { JobStatus, ListingJob } from "@/lib/generated/prisma/client";
 import { MetaApiError } from "@/lib/meta/client";
+import { identifyStep } from "./identify-step";
 import { imagingStep } from "./imaging-step";
 import { segmentStep } from "./segment-step";
 import type { StepFn } from "./types";
@@ -12,13 +13,15 @@ const STEP_LOCK_MS = 6 * 60_000;
 const MAX_ATTEMPTS = 3;
 
 const STEPS = {
+  identifying: { run: identifyStep, next: "segmenting" },
   segmenting: { run: segmentStep, next: "imaging" },
   imaging: { run: imagingStep, next: "writing" },
-  writing: { run: writingStep, next: "review" },
+  // The quality agent ("reviewing") will slot in between writing and ready.
+  writing: { run: writingStep, next: "ready" },
 } satisfies Record<string, { run: StepFn; next: JobStatus }>;
 
 type StepStatus = keyof typeof STEPS;
-const ACTIVE: JobStatus[] = ["queued", "segmenting", "imaging", "writing"];
+const ACTIVE: JobStatus[] = ["queued", ...(Object.keys(STEPS) as StepStatus[])];
 
 export function isActive(status: JobStatus): boolean {
   return ACTIVE.includes(status);
@@ -34,7 +37,7 @@ export function needsAdvance(job: ListingJob): boolean {
 // only the caller that claims the step lock does any work.
 export async function advanceJob(id: string): Promise<void> {
   const db = getDb();
-  await db.listingJob.updateMany({ where: { id, status: "queued" }, data: { status: "segmenting" } });
+  await db.listingJob.updateMany({ where: { id, status: "queued" }, data: { status: "identifying" } });
 
   const now = new Date();
   const claimed = await db.listingJob.updateMany({

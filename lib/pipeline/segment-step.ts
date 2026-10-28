@@ -1,7 +1,4 @@
-import { toDataUrl } from "@/lib/meta/client";
 import { segmentProduct } from "@/lib/meta/segment";
-import { describeSubject } from "@/lib/meta/subject";
-import { getDb } from "@/lib/db";
 import { storage } from "@/lib/storage";
 import type { StepFn } from "./types";
 
@@ -10,15 +7,9 @@ const FALLBACK_PHRASE = "product";
 
 export const segmentStep: StepFn = async (job) => {
   const original = await storage.read(job.originalImage);
+  const prompts = job.subjectPhrase ? [job.subjectPhrase, FALLBACK_PHRASE] : [FALLBACK_PHRASE];
 
-  let phrase = job.subjectPhrase;
-  if (!phrase) {
-    phrase = await describeSubject(toDataUrl(original.data, original.mimeType));
-    // Save now so a retry of this step doesn't pay for it again.
-    await getDb().listingJob.update({ where: { id: job.id }, data: { subjectPhrase: phrase } });
-  }
-
-  for (const prompt of [phrase, FALLBACK_PHRASE]) {
+  for (const prompt of prompts) {
     const result = await segmentProduct(original.data, prompt);
     if (result) {
       const cutoutImage = await storage.save("cutout", result.cutoutPng, "image/png");
