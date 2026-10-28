@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+!.env.example
+
+# snapshop: local image storage, generated prisma client, verify-script output
+/uploads/
+/lib/generated/
+/scripts/output/
