@@ -44,6 +44,9 @@ model ListingJob {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   publishedAt   DateTime?
+  // Public storefront id, set on first publish. Never expose `id` publicly:
+  // it is what lets the owner edit the listing.
+  slug          String?   @unique
 
   @@index([status, publishedAt])
 }
