@@ -6,7 +6,7 @@ export default function Home() {
       <div>
         <h1 className="text-4xl font-bold">SnapShop</h1>
         <p className="mt-2 text-lg text-zinc-500">
-          One photo of your product becomes a ready-to-sell listing, in English and Sinhala.
+          One photo of your product becomes a ready-to-sell listing.
         </p>
       </div>
       <Link

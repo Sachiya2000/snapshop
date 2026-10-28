@@ -104,19 +104,13 @@ export function JobProgress({ id }: { id: string }) {
 
       {job.listing && (
         <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <div>
-            <h2 className="text-lg font-semibold">{job.listing.title.en}</h2>
-            <p className="text-zinc-500" lang="si">{job.listing.title.si}</p>
-          </div>
-          <p className="text-sm">
-            {job.listing.category.en} · {job.listing.category.si}
-          </p>
+          <h2 className="text-lg font-semibold">{job.listing.title}</h2>
+          <p className="text-sm text-zinc-500">{job.listing.category}</p>
           <p className="text-lg font-semibold">
             {job.listing.priceRange.currency} {job.listing.priceRange.min.toLocaleString()} –{" "}
             {job.listing.priceRange.max.toLocaleString()}
           </p>
-          <p className="text-sm">{job.listing.description.en}</p>
-          <p className="text-sm" lang="si">{job.listing.description.si}</p>
+          <p className="text-sm">{job.listing.description}</p>
           {job.listing.missingDetails.length > 0 && (
             <p className="text-sm text-zinc-500">Consider adding: {job.listing.missingDetails.join(", ")}</p>
           )}

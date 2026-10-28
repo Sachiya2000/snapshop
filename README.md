@@ -6,7 +6,7 @@ A shop owner snaps a product photo. SnapShop then:
 
 1. **Segments** the product and removes the background with **SAM 3.1**.
 2. **Generates** clean studio-style product photos with **Muse Image**.
-3. **Writes** the title, description, category, and a suggested price range in **English and Sinhala** with **Muse Spark**.
+3. **Writes** the title, description, category, and a suggested price range with **Muse Spark** (English for now; Sinhala is planned once its output quality is reliable).
 4. **Checks** the result with an agent loop that retries or fixes weak output *(planned)*.
 5. Lets the owner **review, edit, and publish** to a public storefront *(planned)*.
 

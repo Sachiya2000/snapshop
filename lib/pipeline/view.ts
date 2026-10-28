@@ -1,5 +1,5 @@
 import type { JobStatus, ListingJob } from "@/lib/generated/prisma/client";
-import type { Listing } from "@/lib/meta/listing";
+import { listingSchema, type Listing } from "@/lib/meta/listing";
 import { storage } from "@/lib/storage";
 
 // What GET /api/listing/:id returns. Safe to send to the browser.
@@ -24,7 +24,8 @@ export function toJobView(job: ListingJob): JobView {
       cutout: job.cutoutImage ? storage.publicUrl(job.cutoutImage) : null,
       studio: job.studioImages.map((key) => storage.publicUrl(key)),
     },
-    listing: job.listing as Listing | null,
+    // Jobs saved before a schema change (e.g. the old bilingual shape) show no listing.
+    listing: listingSchema.safeParse(job.listing).data ?? null,
     updatedAt: job.updatedAt.toISOString(),
   };
 }

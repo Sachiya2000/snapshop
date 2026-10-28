@@ -22,12 +22,12 @@ export const CATEGORIES = [
   "Other",
 ] as const;
 
-const bilingual = z.object({ en: z.string().min(1), si: z.string().min(1) });
-
+// English only for now: Muse Spark's Sinhala output had made-up words in
+// testing. Sinhala can return as an extra field once it's reliable.
 export const listingSchema = z.object({
-  title: bilingual,
-  description: bilingual,
-  category: z.object({ en: z.enum(CATEGORIES), si: z.string().min(1) }),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  category: z.enum(CATEGORIES),
   priceRange: z
     .object({ currency: z.string().length(3), min: z.number().nonnegative(), max: z.number().nonnegative() })
     .refine((p) => p.max >= p.min, "priceRange.max must be >= min"),
@@ -38,24 +38,12 @@ export const listingSchema = z.object({
 export type Listing = z.infer<typeof listingSchema>;
 
 // Same shape as listingSchema, written out for strict structured output.
-const bilingualJson = {
-  type: "object",
-  properties: { en: { type: "string" }, si: { type: "string" } },
-  required: ["en", "si"],
-  additionalProperties: false,
-};
-
 const LISTING_JSON_SCHEMA = {
   type: "object",
   properties: {
-    title: bilingualJson,
-    description: bilingualJson,
-    category: {
-      type: "object",
-      properties: { en: { type: "string", enum: [...CATEGORIES] }, si: { type: "string" } },
-      required: ["en", "si"],
-      additionalProperties: false,
-    },
+    title: { type: "string" },
+    description: { type: "string" },
+    category: { type: "string", enum: [...CATEGORIES] },
     priceRange: {
       type: "object",
       properties: { currency: { type: "string" }, min: { type: "number" }, max: { type: "number" } },
@@ -70,12 +58,12 @@ const LISTING_JSON_SCHEMA = {
 
 const INSTRUCTIONS = `You write online-store product listings for small shops in Sri Lanka.
 Look only at what the photo shows; never invent brand names, specs or claims you cannot see.
-Write every text field twice: "en" in clear English, "si" in natural Sinhala using Sinhala script (not transliteration).
+Write in clear, simple English.
 Title: under 70 characters, product type first, then key visible attributes.
 Description: 2-4 short sentences a buyer would find useful.
-Category: pick the closest option from the allowed list; "si" is its Sinhala name.
+Category: pick the closest option from the allowed list.
 priceRange: a realistic retail range in the given currency for a small local shop.
-missingDetails: up to 4 short items the owner should add (e.g. size, material), in English.`;
+missingDetails: up to 4 short items the owner should add (e.g. size, material).`;
 
 export interface GenerateListingInput {
   imageDataUrl: string;
