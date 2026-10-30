@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { CATEGORIES, listingEditSchema, type Listing, type ListingEdit } from "@/lib/listing-schema";
 import type { JobView } from "@/lib/pipeline/view";
+import { AlertIcon, ArrowRightIcon, CheckIcon, SparklesIcon, SpinnerIcon } from "../../components/icons";
+import { alertError, buttonPrimary, buttonSecondary, card, input } from "../../components/ui";
 
 interface Props {
   job: JobView & { listing: Listing };
@@ -30,8 +32,8 @@ function fromJob(job: Props["job"]): FormState {
   };
 }
 
-const inputClass =
-  "w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-base dark:border-zinc-700 focus:border-emerald-600 focus:outline-none";
+const TITLE_MAX = 120;
+const DESCRIPTION_MAX = 2000;
 
 export function ListingEditor({ job, onUpdate }: Props) {
   const [form, setForm] = useState<FormState>(() => fromJob(job));
@@ -116,17 +118,29 @@ export function ListingEditor({ job, onUpdate }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {published && job.slug && (
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-          <span className="font-medium">Live in your store</span>
-          <Link href={`/store/${job.slug}`} className="font-semibold underline">
+    <div className="flex animate-fade-in flex-col gap-4">
+      {published && job.slug ? (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-100">
+          <span className="flex items-center gap-2 font-medium">
+            <span className="relative flex size-2.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+            </span>
+            Live in your store
+          </span>
+          <Link href={`/store/${job.slug}`} className="inline-flex items-center gap-1 text-sm font-semibold hover:underline">
             View listing
+            <ArrowRightIcon className="size-4" />
           </Link>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand-strong">
+          <SparklesIcon className="size-4 shrink-0" />
+          Your listing is ready. Check the details, then publish.
         </div>
       )}
 
-      <section className="flex flex-col gap-2">
+      <section className={`${card} flex flex-col gap-3`}>
         <h2 className="font-semibold">Main photo</h2>
         <div className="grid grid-cols-3 gap-2">
           {photos.map((photo) => {
@@ -138,18 +152,18 @@ export function ListingEditor({ job, onUpdate }: Props) {
                 onClick={() => set("cover", photo.src)}
                 aria-pressed={selected}
                 className={
-                  "relative overflow-hidden rounded-lg ring-offset-2 ring-offset-white dark:ring-offset-zinc-950 " +
-                  (selected ? "ring-3 ring-emerald-600" : "ring-1 ring-zinc-200 dark:ring-zinc-800")
+                  "relative overflow-hidden rounded-xl transition " +
+                  (selected ? "ring-3 ring-brand" : "opacity-80 ring-1 ring-border hover:opacity-100")
                 }
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- images come from our own API route */}
-                <img
-                  src={photo.src}
-                  alt={photo.label}
-                  className="aspect-square w-full bg-[repeating-conic-gradient(#e4e4e7_0%_25%,#fff_0%_50%)] bg-[length:16px_16px] object-cover"
-                />
-                <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
-                  {selected ? "✓ " : ""}
+                <img src={photo.src} alt={photo.label} className="checkerboard aspect-square w-full object-cover" />
+                {selected && (
+                  <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-brand text-white shadow dark:text-zinc-950">
+                    <CheckIcon className="size-3.5" />
+                  </span>
+                )}
+                <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white backdrop-blur">
                   {photo.label}
                 </span>
               </button>
@@ -158,92 +172,85 @@ export function ListingEditor({ job, onUpdate }: Props) {
         </div>
       </section>
 
-      <label className="flex flex-col gap-1">
-        <span className="font-semibold">Title</span>
-        <input className={inputClass} value={form.title} maxLength={120} onChange={(e) => set("title", e.target.value)} />
-      </label>
+      <section className={`${card} flex flex-col gap-4`}>
+        <Field label="Title" count={form.title.length} max={TITLE_MAX}>
+          <input className={input} value={form.title} maxLength={TITLE_MAX} onChange={(e) => set("title", e.target.value)} />
+        </Field>
 
-      <label className="flex flex-col gap-1">
-        <span className="font-semibold">Description</span>
-        <textarea
-          className={inputClass}
-          rows={5}
-          maxLength={2000}
-          value={form.description}
-          onChange={(e) => set("description", e.target.value)}
-        />
-      </label>
+        <Field label="Description" count={form.description.length} max={DESCRIPTION_MAX}>
+          <textarea
+            className={`${input} resize-y leading-relaxed`}
+            rows={6}
+            maxLength={DESCRIPTION_MAX}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+          />
+        </Field>
 
-      {job.listing.missingDetails.length > 0 && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">
-          Buyers may also want to know: {job.listing.missingDetails.join(", ")}
-        </p>
-      )}
+        {job.listing.missingDetails.length > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-100">
+            <p className="mb-2 font-medium">Buyers may also want to know</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {job.listing.missingDetails.map((detail) => (
+                <li key={detail} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs dark:bg-amber-900/60">
+                  {detail}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-      <label className="flex flex-col gap-1">
-        <span className="font-semibold">Category</span>
-        <select
-          className={inputClass}
-          value={form.category}
-          onChange={(e) => set("category", e.target.value as Listing["category"])}
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </label>
+        <Field label="Category">
+          <select
+            className={input}
+            value={form.category}
+            onChange={(e) => set("category", e.target.value as Listing["category"])}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </section>
 
-      <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 font-semibold">Price range ({currency})</legend>
+      <fieldset className={`${card} flex flex-col gap-2`}>
+        <legend className="sr-only">Price range ({currency})</legend>
+        <span aria-hidden="true" className="text-sm font-semibold">
+          Price range
+        </span>
         <div className="flex items-center gap-2">
-          <input
-            className={inputClass}
-            type="number"
-            inputMode="decimal"
-            min={0}
-            aria-label="Lowest price"
-            value={form.min}
-            onChange={(e) => set("min", e.target.value)}
-          />
-          <span className="text-zinc-500">to</span>
-          <input
-            className={inputClass}
-            type="number"
-            inputMode="decimal"
-            min={0}
-            aria-label="Highest price"
-            value={form.max}
-            onChange={(e) => set("max", e.target.value)}
-          />
+          <PriceInput currency={currency} label="Lowest price" value={form.min} onChange={(v) => set("min", v)} />
+          <span className="text-muted">–</span>
+          <PriceInput currency={currency} label="Highest price" value={form.max} onChange={(v) => set("max", v)} />
         </div>
-        <p className="text-sm text-zinc-500">Suggested by AI. Set the price you actually sell at.</p>
+        <p className="flex items-center gap-1.5 text-xs text-muted">
+          <SparklesIcon className="size-3.5" />
+          Suggested by AI. Set the price you actually sell at.
+        </p>
       </fieldset>
 
       {error && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p role="alert" className={alertError}>
+          <AlertIcon className="mt-px size-4 shrink-0" />
           {error}
         </p>
       )}
 
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-zinc-200 bg-background px-4 py-3 dark:border-zinc-800">
+      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-border bg-background/85 px-4 py-3 backdrop-blur-lg">
         {published ? (
           <>
-            <button
-              type="button"
-              onClick={() => run("unpublish")}
-              disabled={busy !== null}
-              className="rounded-xl border border-zinc-300 px-4 py-3 font-medium disabled:opacity-50 dark:border-zinc-700"
-            >
-              {busy === "unpublish" ? "…" : "Unpublish"}
+            <button type="button" onClick={() => run("unpublish")} disabled={busy !== null} className={buttonSecondary}>
+              {busy === "unpublish" ? <SpinnerIcon className="size-4" /> : "Unpublish"}
             </button>
             <button
               type="button"
               onClick={() => run("save")}
               disabled={busy !== null || !dirty}
-              className="flex-1 rounded-xl bg-emerald-600 py-3 font-semibold text-white disabled:opacity-50"
+              className={`${buttonPrimary} flex-1`}
             >
+              {busy === "save" && <SpinnerIcon className="size-4" />}
               {busy === "save" ? "Saving…" : dirty ? "Save changes" : "Saved"}
             </button>
           </>
@@ -253,21 +260,72 @@ export function ListingEditor({ job, onUpdate }: Props) {
               type="button"
               onClick={() => run("save")}
               disabled={busy !== null || !dirty}
-              className="rounded-xl border border-zinc-300 px-4 py-3 font-medium disabled:opacity-50 dark:border-zinc-700"
+              className={buttonSecondary}
             >
               {busy === "save" ? "Saving…" : dirty ? "Save draft" : "Saved"}
             </button>
-            <button
-              type="button"
-              onClick={() => run("publish")}
-              disabled={busy !== null}
-              className="flex-1 rounded-xl bg-emerald-600 py-3 font-semibold text-white disabled:opacity-50"
-            >
+            <button type="button" onClick={() => run("publish")} disabled={busy !== null} className={`${buttonPrimary} flex-1`}>
+              {busy === "publish" ? <SpinnerIcon className="size-4" /> : <CheckIcon className="size-4" />}
               {busy === "publish" ? "Publishing…" : "Publish"}
             </button>
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  count,
+  max,
+  children,
+}: {
+  label: string;
+  count?: number;
+  max?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="flex items-baseline justify-between text-sm">
+        <span className="font-semibold">{label}</span>
+        {max !== undefined && (
+          <span className={"font-mono text-xs " + (count! > max * 0.9 ? "text-amber-600" : "text-muted")}>
+            {count}/{max}
+          </span>
+        )}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function PriceInput({
+  currency,
+  label,
+  value,
+  onChange,
+}: {
+  currency: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="relative flex-1">
+      <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm text-muted">
+        {currency}
+      </span>
+      <input
+        className={`${input} pl-13 font-medium tabular-nums`}
+        type="number"
+        inputMode="decimal"
+        min={0}
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }

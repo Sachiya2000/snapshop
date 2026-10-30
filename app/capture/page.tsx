@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { AlertIcon, CameraIcon, CheckIcon, ImageIcon, SparklesIcon, SpinnerIcon } from "../components/icons";
+import { alertError, buttonPrimary, buttonSecondary } from "../components/ui";
 
 const MAX_SIDE = 2000;
 
@@ -60,54 +62,83 @@ export default function CapturePage() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 py-6">
       <header>
-        <h1 className="text-2xl font-bold">New product</h1>
-        <p className="text-sm text-zinc-500">One photo is enough. We&apos;ll do the rest.</p>
+        <h1 className="text-2xl font-bold tracking-tight">New product</h1>
+        <p className="mt-1 text-sm text-muted">One photo is enough. We&apos;ll do the rest.</p>
       </header>
 
-      <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+      <button
+        type="button"
+        onClick={() => cameraInput.current?.click()}
+        disabled={uploading}
+        aria-label={preview ? "Retake photo" : "Take a photo"}
+        className={
+          "group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl transition " +
+          (preview
+            ? "border border-border bg-surface shadow-sm"
+            : "border-2 border-dashed border-border bg-surface/60 hover:border-brand hover:bg-brand-soft/40")
+        }
+      >
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local blob URL
-          <img src={preview} alt="Selected product photo" className="h-full w-full object-contain" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- local blob URL */}
+            <img src={preview} alt="Selected product photo" className="h-full w-full animate-fade-in object-contain" />
+            {!uploading && (
+              <span className="absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
+                <CameraIcon className="size-3.5" />
+                Retake
+              </span>
+            )}
+          </>
         ) : (
-          <p className="px-8 text-center text-zinc-500">Place the product in good light and fill the frame.</p>
+          <span className="flex flex-col items-center gap-3 px-8 text-center">
+            <span className="flex size-16 items-center justify-center rounded-2xl bg-brand-soft text-brand transition group-hover:scale-105">
+              <CameraIcon className="size-8" />
+            </span>
+            <span className="font-semibold">Tap to take a photo</span>
+            <span className="text-sm text-muted">Place the product in good light and fill the frame.</span>
+          </span>
         )}
-      </div>
+        {uploading && (
+          <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/70 font-medium backdrop-blur-sm">
+            <SpinnerIcon className="size-8 text-brand" />
+            Uploading your photo…
+          </span>
+        )}
+      </button>
 
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onPick} />
       <input ref={galleryInput} type="file" accept="image/*" hidden onChange={onPick} />
 
+      <ul className="flex flex-wrap justify-center gap-2 text-xs text-muted">
+        {["Good light", "Plain background", "Product fills the frame"].map((tip) => (
+          <li key={tip} className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1">
+            <CheckIcon className="size-3.5 text-brand" />
+            {tip}
+          </li>
+        ))}
+      </ul>
+
       <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => cameraInput.current?.click()}
-          disabled={uploading}
-          className="rounded-xl bg-zinc-900 py-3 font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
-        >
-          {file ? "Retake" : "Take photo"}
+        <button type="button" onClick={() => cameraInput.current?.click()} disabled={uploading} className={buttonSecondary}>
+          <CameraIcon className="size-4.5" />
+          {file ? "Retake" : "Camera"}
         </button>
-        <button
-          type="button"
-          onClick={() => galleryInput.current?.click()}
-          disabled={uploading}
-          className="rounded-xl border border-zinc-300 py-3 font-medium disabled:opacity-50 dark:border-zinc-700"
-        >
-          From gallery
+        <button type="button" onClick={() => galleryInput.current?.click()} disabled={uploading} className={buttonSecondary}>
+          <ImageIcon className="size-4.5" />
+          Gallery
         </button>
       </div>
 
       {file && (
-        <button
-          type="button"
-          onClick={upload}
-          disabled={uploading}
-          className="rounded-xl bg-emerald-600 py-4 text-lg font-semibold text-white disabled:opacity-60"
-        >
+        <button type="button" onClick={upload} disabled={uploading} className={`${buttonPrimary} animate-fade-in py-4 text-lg`}>
+          {uploading ? <SpinnerIcon /> : <SparklesIcon />}
           {uploading ? "Uploading…" : "Create listing"}
         </button>
       )}
 
       {error && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p role="alert" className={alertError}>
+          <AlertIcon className="mt-px size-4 shrink-0" />
           {error}
         </p>
       )}
