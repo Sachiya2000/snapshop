@@ -45,3 +45,7 @@ next-env.d.ts
 /uploads/
 /lib/generated/
 /scripts/output/
+
+# local-only docs, not for the public repo
+/AGENTS.md
+/SnapShop_Developer_Guide.docx
