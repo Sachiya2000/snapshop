@@ -1,6 +1,7 @@
 import { isValidKey, storage } from "@/lib/storage";
 
-// Serves images from local storage. Goes away when storage moves to Vercel Blob.
+// Serves stored images (local disk or private Vercel Blob). Keys are random
+// UUIDs, so the content behind a URL never changes and can be cached forever.
 export async function GET(_request: Request, ctx: RouteContext<"/api/images/[...key]">) {
   const { key: parts } = await ctx.params;
   const key = parts.join("/");
