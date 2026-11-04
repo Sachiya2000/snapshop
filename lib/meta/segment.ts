@@ -27,8 +27,13 @@ export async function segmentProduct(image: Buffer, phrase: string): Promise<Seg
   const alpha = await placeMask(best, width, height);
 
   const crop = paddedCrop(best.bounds, width, height, 0.06);
-  const cutoutPng = await sharp(rgb, { raw: { width, height, channels: 3 } })
+  // Two passes: sharp runs extract before joinChannel in a single chain, which
+  // crops the RGB but not the alpha and misaligns them.
+  const rgba = await sharp(rgb, { raw: { width, height, channels: 3 } })
     .joinChannel(alpha, { raw: { width, height, channels: 1 } })
+    .raw()
+    .toBuffer();
+  const cutoutPng = await sharp(rgba, { raw: { width, height, channels: 4 } })
     .extract(crop)
     .png()
     .toBuffer();
